@@ -1,6 +1,12 @@
 const inquirer = require('inquirer');
+// const db = require('./db/queries');
+const db = require('./db/connection')
 
 const promptUser = () => {
+    function addDept(answers) {
+        console.log(answers);
+    }
+
     return inquirer.prompt([
         {
             type: 'list',
@@ -112,6 +118,47 @@ const promptUser = () => {
             when: (answers) => answers.newRole
         }
     ])
+    .then((answers) => {
+        console.log(answers)
+        if (answers.options === 'View all departments') {
+            viewDept();
+        }
+        if (answers.options === 'View all roles') {
+            viewRoles();
+        }
+        if (answers.options === 'View all employees') {
+            viewEmployees();
+        }
+        if (answers.addDepartment) {
+            addDept();
+        }
+
+    })
+};
+
+function viewDept() {
+    db.query(`SELECT * FROM department;`, (err, rows) => {
+        console.table(rows)
+    })
+};
+
+function viewRoles() {
+    db.query(`SELECT role.id, role.title, department.department_name, role.salary 
+    FROM role
+    LEFT JOIN department ON role.department_id = department.id;`, (err, rows) => {
+        console.table(rows)
+    })
+};
+
+function viewEmployees() {
+    db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, CONCAT(manager.first_name,' ',manager.last_name) AS Manager              
+    FROM employee
+    LEFT JOIN role on employee.role_id = role.id
+    LEFT JOIN department ON role.department_id = department.id
+    LEFT JOIN employee manager ON manager.id = employee.manager_id
+    ORDER BY employee.id;`, (err, rows) => {
+        console.table(rows)
+    })
 };
 
 promptUser();
