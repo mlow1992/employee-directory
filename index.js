@@ -1,12 +1,8 @@
 const inquirer = require('inquirer');
-// const db = require('./db/queries');
 const db = require('./db/connection')
 
 const promptUser = () => {
-    function addDept(answers) {
-        console.log(answers);
-    }
-
+    
     return inquirer.prompt([
         {
             type: 'list',
@@ -99,11 +95,11 @@ const promptUser = () => {
         },
         {
             type: 'input',
-            name: 'newRole',
+            name: 'newRoleId',
             message: `What is the employee's role?`,
             when: (answers) => answers.lastName,
-            validate: newRoleInput => {
-                if (newRoleInput) {
+            validate: newRoleIdInput => {
+                if (newRoleIdInput) {
                     return true;
                 } else {
                     console.log('Please enter a role');
@@ -113,13 +109,25 @@ const promptUser = () => {
         },
         {
             type: 'input',
-            name: 'manager',
+            name: 'managerId',
             message: `Who is the employee's manager (if any)?`,
-            when: (answers) => answers.newRole
+            when: (answers) => answers.newRoleId
+        },
+        {
+            type: 'input',
+            name: 'EmployeeId',
+            message: `What is the employee's id?`,
+            when: (answers) => answers.options === 'Update an employee role'
+        },
+        {
+            type: 'input',
+            name: 'updateRoleId',
+            message: `What is the updated role id?`,
+            when: (answers) => answers.EmployeeId
         }
     ])
     .then((answers) => {
-        console.log(answers)
+        // console.log(answers)
         if (answers.options === 'View all departments') {
             viewDept();
         }
@@ -130,9 +138,21 @@ const promptUser = () => {
             viewEmployees();
         }
         if (answers.addDepartment) {
-            addDept();
+            const param = answers.addDepartment
+            db.query(`INSERT INTO department (department_name) VALUES(?)`, param);
         }
-
+        if (answers.addDepartmentId) {
+            const param = [answers.addRole, answers.addSalary, answers.addDepartmentId];
+            db.query(`INSERT INTO role (title, salary, department_id) VALUES(?,?,?)`, param);
+        }
+        if (answers.managerId) {
+            const param = [answers.firstName, answers.lastName, answers.newRoleId, answers.managerId];
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES(?,?,?,?)`, param);
+        }
+        if (answers.updateRoleId) {
+            const param = [answers.updateRoleId, answers.EmployeeId];
+            db.query(`UPDATE employee SET role_id = ? WHERE id = ?`, param);
+        }
     })
 };
 
